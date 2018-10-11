@@ -5,6 +5,7 @@
 #include <Winsock2.h>
 #include <WS2tcpip.h>
 #include <cstdio>
+#include <string.h>
 #include <time.h>
 #pragma comment(lib, "ws2_32.lib")
 
@@ -15,7 +16,7 @@ class Client {
 private:
 	char sendstr[128];
 	void sendtime() {
-		itoa(time(NULL), sendstr, 10);
+		_itoa_s(time(NULL), sendstr, 2, 10);
 		send(soc, sendstr, strlen(sendstr), 0);
 	}
 	void sendname() {
@@ -26,11 +27,11 @@ private:
 			Client now = list[i];
 			if (now.relased)continue;
 			char tmp[30];
-			itoa(now.id, tmp, 10);
+			_itoa_s(now.id, tmp, 2, 10);
 			for (int j = 0; j <= 1; j++)sendstr[i * 23 + j] = tmp[j];
 			for (int j = 0; j < 16; j++)sendstr[i * 23 + 2 + j] = ip[j];
 			sendstr[i * 23 + 18] = ':';
-			itoa(now.addr.sin_port, tmp, 10);
+			_itoa_s(now.addr.sin_port, tmp, 2, 10);
 			for (int j = 0; j < 4; j++)sendstr[i * 23 + 19 + j] = tmp[j];
 		}
 		send(soc, sendstr, strlen(sendstr), 0);
@@ -42,7 +43,7 @@ private:
 			sendstr[i - 8] = a[i];
 		}
 		int tag = (a[5] - '0') * 10 + a[6] - '0';
-		for (int i; i < top; i++) {
+		for (int i=0; i < top; i++) {
 			if (list[i].relased)continue;
 			if (list[i].id == tag) {
 				flag = i;
@@ -60,6 +61,16 @@ public:
 	SOCKET soc;
 	SOCKADDR_IN addr;
 	bool relased;
+	Client() {
+
+	}
+	Client(int id_,char* ip_ ,SOCKET soc_, SOCKADDR_IN addr_,bool relased_){
+		id = id_;
+		strcpy_s(ip, ip_);
+		soc = soc_;
+		addr = addr_;
+		relased = relased_;
+	}
 	void sendHello() {
 		send(soc, "Hello!", 7, 0);
 	}

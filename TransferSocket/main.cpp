@@ -4,17 +4,22 @@
 #include <Winsock2.h>
 #include <WS2tcpip.h>
 #include <cstdio>
-#include <client.h>
+#include "client.h"
 #pragma comment(lib, "ws2_32.lib")
 
 #define M 1010
 #define N 128
 
-void deal(SOCKET now, SOCKADDR_IN addr, int pos) {
+Client list[110];
+int top_list;
+
+void deal(int pos) {
 	char recvstr[N], sendstr[N];
-	send(now, "Hello!", 7, 0);
+	Client now = list[pos];
+	now.sendHello();
 	while (1) {
-		recv(now, recvstr, N, 0);
+		recv(now.soc, recvstr, N, 0);
+		if (now.judge(recvstr,list,top_list) == -1)return;
 		//char ip[16];
 		//inet_ntop(AF_INET, &addr.sin_addr, ip, sizeof(ip));
 		/*
@@ -56,10 +61,14 @@ int main() {
 		if (now == INVALID_SOCKET) {
 			continue;
 		}
-		thd[top_thd] = std::thread(deal, now, addrClient, top_thd);
-		top_thd++;
+		char ip[16];
+		inet_ntop(AF_INET, &addrClient.sin_addr, ip, sizeof(ip));
+		Client nowClient(top_list, ip, now, addrClient, 0);
+		list[top_list++]=nowClient;
+		thd[top_thd++] = std::thread(deal, top_list-1);
+		//top_thd++;
 
-		if (top_thd == 5)break;
+		if (top_thd == 5)break; 
 	}
 	for (int i = 0; i < top_thd; i++) {
 		thd[i].join();
