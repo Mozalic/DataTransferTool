@@ -38,7 +38,8 @@
 *.ldb
 *.sln
 *.config
-
+*.db
+*.suo
 
 #¹ıÂËÎÄ¼ş¼ĞDebug,Release,obj
 TransferSocket/Debug/
