@@ -16,25 +16,34 @@ class Client {
 private:
 	char sendstr[128];
 	void sendtime() {
-		_itoa_s(time(NULL), sendstr, 2, 10);
-		send(soc, sendstr, strlen(sendstr), 0);
+		//printf("%d\n", time(NULL));
+		_itoa(time(NULL), sendstr, 10);
+		//printf("sendtime= %s\n", sendstr);
+		send(soc, sendstr, 128, 0);
 	}
 	void sendname() {
-		send(soc, "Mozalic", strlen("Mozalic"), 0);
+		send(soc, "Mozalic", 128, 0);
 	}
 	void sendlist (Client* list,int top) {
+		int cnt = 0;
 		for (int i = 0; i < top; i++) {
 			Client now = list[i];
 			if (now.relased)continue;
 			char tmp[30];
-			_itoa_s(now.id, tmp, 2, 10);
-			for (int j = 0; j <= 1; j++)sendstr[i * 23 + j] = tmp[j];
-			for (int j = 0; j < 16; j++)sendstr[i * 23 + 2 + j] = ip[j];
-			sendstr[i * 23 + 18] = ':';
-			_itoa_s(now.addr.sin_port, tmp, 2, 10);
-			for (int j = 0; j < 4; j++)sendstr[i * 23 + 19 + j] = tmp[j];
-		}
-		send(soc, sendstr, strlen(sendstr), 0);
+			_itoa(now.id, tmp, 10);
+			//printf("id= %s  %d\n", tmp, now.id);
+			for (int j = 0; j <= 1; j++)sendstr[cnt * 23 + j] = tmp[j];
+			if (now.id < 10)sendstr[cnt * 23 + 1] = ':';
+			for (int j = 0; j < 15; j++)sendstr[cnt * 23 + 2 + j] = ip[j];
+			sendstr[cnt * 23 + 17] = ':';
+			_itoa(now.addr.sin_port, tmp, 10);
+			//printf("id= %s  %d\n", tmp, now.addr.sin_port);
+			for (int j = 0; j < 4; j++)sendstr[cnt * 23 + 18 + j] = tmp[j];
+			sendstr[cnt * 23 + 22] = ';';
+			cnt++;
+		}sendstr[cnt * 23] = '\0';
+		//printf("sendlist= %s\n", sendstr);
+		send(soc, sendstr, 128, 0);
 	}
 	void sendmessage(char* a, Client* list, int top) {
 		char tmp[128];
@@ -46,14 +55,16 @@ private:
 		for (int i=0; i < top; i++) {
 			if (list[i].relased)continue;
 			if (list[i].id == tag) {
-				flag = i;
+				flag = i+1;
 				break;
 			}
 		}
 		if (!flag) {
-			send(soc, "User not found!", strlen("User not found!"), 0);
+			send(soc, "User not found!\0", 128, 0);
+			return;
 		}
-		send(list[flag].soc, sendstr, strlen(sendstr), 0);
+		//printf("sendmessage= %s\n", sendstr);
+		send(list[flag-1].soc, sendstr, 128, 0);
 	}
 public:
 	int id;
@@ -66,7 +77,7 @@ public:
 	}
 	Client(int id_,char* ip_ ,SOCKET soc_, SOCKADDR_IN addr_,bool relased_){
 		id = id_;
-		strcpy_s(ip, ip_);
+		strcpy(ip, ip_);
 		soc = soc_;
 		addr = addr_;
 		relased = relased_;
@@ -82,6 +93,7 @@ public:
 		send id message
 		exit
 		*/
+		printf("Receive request=%s. From Client:%d\n", a, id);
 		switch (a[0]) {
 		case 't':
 			sendtime();
@@ -91,8 +103,10 @@ public:
 			break;
 		case 'l':
 			sendlist(list,top);
+			break;
 		case 's':
 			sendmessage(a,list,top);
+			break;
 		case 'e':
 			return -1;
 		}

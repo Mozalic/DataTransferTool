@@ -19,9 +19,10 @@ void deal(int pos) {
 	now.sendHello();
 	while (1) {
 		recv(now.soc, recvstr, N, 0);
-		if (now.judge(recvstr,list,top_list) == -1)return;
-		//char ip[16];
-		//inet_ntop(AF_INET, &addr.sin_addr, ip, sizeof(ip));
+		if (now.judge(recvstr, list, top_list) == -1) {
+			list[pos].relased = 1;
+			return;
+		}
 		/*
 		time
 		name
